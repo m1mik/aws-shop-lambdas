@@ -6,3 +6,5 @@ node_modules
 # Serverless
 .serverless
 .dynamodb
+.env
+my_invokation.ts
