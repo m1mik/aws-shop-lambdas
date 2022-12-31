@@ -40,8 +40,7 @@ export const DynamoClient = {
         return car;
       });
     } catch (err) {
-      console.log("FAIL ON SCAN !!!", err);
-      return null;
+      return { message: "Fail on getProductsList method call", err };
     }
   },
 
@@ -71,6 +70,8 @@ export const DynamoClient = {
     const params = {
       TableName: CARS_TABLE_NAME,
       Item: {
+        PK: id,
+        SK: "car",
         id,
         title,
         price,
@@ -84,6 +85,8 @@ export const DynamoClient = {
       const stockParams = {
         TableName: STOCK_CARS_TABLE_NAME,
         Item: {
+          PK: id,
+          SK: "stock",
           id,
           count: quantity,
         },

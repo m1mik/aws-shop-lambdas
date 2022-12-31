@@ -5,10 +5,10 @@ plugins:
   - serverless-offline
   - serverless-dynamodb-local
   - serverless-plugin-typescript
+  - serverless-plugin-include-dependencies
 
 package:
-  patterns:
-    - "!node_modules/**"
+  individually: true
 
 provider:
   name: aws
@@ -52,6 +52,10 @@ functions:
           path: products/{id}
           method: get
           cors: true
+          request:
+            parameters:
+              paths:
+                id: true
 
   createProduct:
     handler: handlers.createProduct

@@ -24,6 +24,7 @@
     "@types/aws-lambda": "^8.10.109",
     "@types/uuid": "^9.0.0",
     "dotenv": "^16.0.3",
-    "esbuild": "^0.16.12"
+    "esbuild": "^0.16.12",
+    "serverless-plugin-include-dependencies": "^5.0.0"
   }
 }
