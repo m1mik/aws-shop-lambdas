@@ -4,7 +4,7 @@ frameworkVersion: "3"
 plugins:
   - serverless-offline
   - serverless-dynamodb-local
-  # - serverless-plugin-typescript
+  - serverless-plugin-typescript
 
 package:
   patterns:
@@ -38,31 +38,31 @@ custom:
 
 functions:
   getProductsList:
-    handler: dist/handlers.getProductsList
+    handler: handlers.getProductsList
     events:
       - http:
           path: products
           method: get
           cors: true
 
-  # getProductsById:
-  #   handler: handler.getProductsById
-  #   events:
-  #     - http:
-  #         path: products/{id}
-  #         method: get
-  #         cors: true
-
-  createProduct:
-    handler: dist/handlers.createProduct
+  getProductsById:
+    handler: handlers.getProductsById
     events:
       - http:
-          path: products
+          path: products/{id}
+          method: get
+          cors: true
+
+  createProduct:
+    handler: handlers.createProduct
+    events:
+      - http:
+          path: put-products
           method: post
           cors: true
 
   deleteProduct:
-    handler: dist/handlers.deleteProduct
+    handler: handlers.deleteProduct
     events:
       - http:
           path: delete-product

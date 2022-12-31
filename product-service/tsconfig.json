@@ -1,16 +1,13 @@
 {
     "compilerOptions": {
-        "removeComments": true,
-        "target": "ES6",
-        "baseUrl": "./",
-        "paths": {},
-        "esModuleInterop": true,
+        "preserveConstEnums": true,
+        "strictNullChecks": true,
+        "sourceMap": true,
+        "allowJs": true,
+        "target": "es5",
+        "outDir": ".build",
         "moduleResolution": "node",
-        "alwaysStrict": true,
-        "noImplicitAny": true
-    },
-    "include": ["./**/*.ts"],
-    "exclude": [
-        "node_modules/**/*"
-    ]
+        "lib": ["es2015"],
+        "rootDir": "./"
+      }
 }

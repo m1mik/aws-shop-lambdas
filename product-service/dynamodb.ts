@@ -5,7 +5,7 @@ import { env } from "./env";
 
 let options = {};
 
-if (env.parsed.IS_OFFLINE) {
+if (env?.parsed?.IS_OFFLINE) {
   options = {
     region: "localhost",
     endpoint: "http://localhost:8000",
@@ -17,49 +17,92 @@ const CARS_TABLE_NAME = "car-shop-table";
 const STOCK_CARS_TABLE_NAME = "stock-car-shop-table";
 
 export const DynamoClient = {
-  async getProductList() {
+  async getProductsList() {
     try {
-      const result = await documentClient
+      const cars = await documentClient
         .scan({
           TableName: CARS_TABLE_NAME,
         })
         .promise();
-      return result;
+      const stockCars = await documentClient
+        .scan({
+          TableName: STOCK_CARS_TABLE_NAME,
+        })
+        .promise();
+      // console.log("!!! CARS: ", cars.Items);
+      // console.log("!!! STOCK CARS ", stockCars.Items);
+
+      return cars.Items?.map((car) => {
+        const match = stockCars.Items?.find((item) => item.id === car.id);
+        if (match) {
+          return { ...car, count: match.count };
+        }
+        return car;
+      });
     } catch (err) {
       console.log("FAIL ON SCAN !!!", err);
       return null;
     }
   },
 
+  async getProductsById(id: string) {
+    try {
+      const params = {
+        TableName: CARS_TABLE_NAME,
+        Key: {
+          id,
+        },
+      };
+
+      const car = await documentClient.get(params).promise();
+      params.TableName = STOCK_CARS_TABLE_NAME;
+      const stock_car = await documentClient.get(params).promise();
+
+      return { ...car.Item, count: stock_car.Item?.count };
+    } catch (err) {
+      console.log(err);
+      console.log(`There was an error getting item by ${id} from table name.`);
+      return err;
+    }
+  },
+
   async createProduct({ title, description, price, quantity }: CarItem) {
+    const id = uuidv4();
     const params = {
       TableName: CARS_TABLE_NAME,
       Item: {
-        id: uuidv4(),
+        id,
         title,
         price,
         description,
-        quantity,
       },
     };
 
     try {
       const res = await documentClient.put(params).promise();
-      console.log("Is new car added: !! ", res);
-      // .then(async () => {
-      //   const stockParams = {
-      //     TableName: CARS_TABLE_NAME,
-      //     Item: {
-      //       PK: newCarData.id,
-      //       SK: "stock",
-      //       count: newCarData.count || 1,
-      //     },
-      //   };
-      //   await documentClient.put(stockParams);
+      console.log(`New car added with ${id} id.`);
+      const stockParams = {
+        TableName: STOCK_CARS_TABLE_NAME,
+        Item: {
+          id,
+          count: quantity,
+        },
+      };
+      try {
+        await documentClient.put(stockParams).promise();
+        console.log(`Stock Cars updated with "${title}" and "${quantity}".`);
+      } catch (err) {
+        console.log(
+          `There was an error adding new item to ${STOCK_CARS_TABLE_NAME} table `
+        );
+        return err;
+      }
       return res;
     } catch (err) {
       console.log(err);
-      console.log(`There was an error adding new item to table`);
+      console.log(
+        `There was an error adding new item to ${CARS_TABLE_NAME} table`
+      );
       return err;
     }
   },

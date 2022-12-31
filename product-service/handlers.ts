@@ -1,32 +1,11 @@
 "use strict";
 import { headers } from "./constants";
 // import { APIGatewayEvent } from "aws-lambda";
-import { DynamoClient } from "dynamodb";
+import { DynamoClient } from "./dynamodb";
 import { CarItem } from "./types";
 
-const mockProducts = [
-  {
-    id: "1234561",
-    title: "Mock 1",
-    description: "Mock 1 descr.",
-    price: 11,
-  },
-  {
-    id: "1234562",
-    title: "Mock 2",
-    description: "Mock 2 descr.",
-    price: 12,
-  },
-  {
-    id: "1234563",
-    title: "Mock 3",
-    description: "Mock 3 descr.",
-    price: 13,
-  },
-];
-
 export const getProductsList = async () => {
-  const result = await DynamoClient.getProductList();
+  const result = await DynamoClient.getProductsList();
 
   return {
     statusCode: 200,
@@ -64,18 +43,11 @@ export const deleteProduct = async ({ id }: { id: string }) => {
   };
 };
 
-// module.exports.getProductsById = async (event: ) => {
-//   const {id} = event.pathParameters;
-//   return {
-//     statusCode: 200,
-//     body: JSON.stringify(
-//       {
-//         data: mockProducts[Number(id) - 1],
-//         input: event,
-//       },
-//       null,
-//       2
-//     ),
-//   };
-
-// };
+export const getProductsById = async ({ id }: { id: string }) => {
+  const result = await DynamoClient.getProductsById(id);
+  return {
+    headers,
+    statusCode: 200,
+    body: result,
+  };
+};
