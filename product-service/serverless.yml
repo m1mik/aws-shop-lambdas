@@ -37,14 +37,6 @@ custom:
     #   dir: offline/migrations
 
 functions:
-  getProductsList:
-    handler: handlers.getProductsList
-    events:
-      - http:
-          path: products
-          method: get
-          cors: true
-
   getProductsById:
     handler: handlers.getProductsById
     events:
@@ -56,6 +48,14 @@ functions:
             parameters:
               paths:
                 id: true
+
+  getProductsList:
+    handler: handlers.getProductsList
+    events:
+      - http:
+          path: products
+          method: get
+          cors: true
 
   createProduct:
     handler: handlers.createProduct

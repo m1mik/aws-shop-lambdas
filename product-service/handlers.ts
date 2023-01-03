@@ -49,11 +49,12 @@ export const deleteProduct = async (event: APIGatewayEvent) => {
   const { body } = event;
 
   if (body) {
-    const result = await DynamoClient.deleteCarItem(JSON.parse(body).id);
+    const id = JSON.parse(body).id;
+    await DynamoClient.deleteCarItem(id);
     return {
       headers,
       statusCode: 200,
-      body: result,
+      body: `${id} car was successfully remove.`,
     };
   }
 

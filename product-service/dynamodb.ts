@@ -112,15 +112,25 @@ export const DynamoClient = {
 
   async deleteCarItem(id: string) {
     try {
-      const result = await documentClient
-        .delete({
-          TableName: CARS_TABLE_NAME,
-          Key: {
-            id, // id is the Partition Key, '123' is the value of it
+      return new Promise((res, rej) => {
+        documentClient.delete(
+          {
+            TableName: CARS_TABLE_NAME,
+            Key: {
+              id,
+            },
           },
-        })
-        .promise();
-      return result;
+          function (err, data) {
+            if (err) {
+              console.log("Error", err);
+              rej(data);
+            } else {
+              console.log("Success", data);
+              res(data);
+            }
+          }
+        );
+      });
     } catch (err) {
       console.log(`DynamoDB error on CarItem removal, where id is ${id}.`);
       return err;
