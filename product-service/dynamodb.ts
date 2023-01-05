@@ -44,26 +44,29 @@ export const DynamoClient = {
     }
   },
 
-  async getProductsById(id: string) {
-    try {
-      const params = {
-        TableName: CARS_TABLE_NAME,
-        Key: {
-          id,
-        },
-      };
+  // async getProductsById(id: string) {
+  //   console.log("getProductsById reached handler: ");
+  //   try {
+  //     const params = {
+  //       TableName: CARS_TABLE_NAME,
+  //       Key: {
+  //         id,
+  //       },
+  //     };
 
-      const car = await documentClient.get(params).promise();
-      params.TableName = STOCK_CARS_TABLE_NAME;
-      const stock_car = await documentClient.get(params).promise();
+  //     const car = await documentClient.get(params).promise();
+  //     console.log("AFTER CARS_TABLE_NAME: ", car);
+  //     params.TableName = STOCK_CARS_TABLE_NAME;
+  //     const stock_car = await documentClient.get(params).promise();
+  //     console.log("AFTER STOCK_CARS_TABLE_NAME: ", stock_car);
 
-      return { ...car.Item, count: stock_car.Item?.count };
-    } catch (err) {
-      console.log(err);
-      console.log(`There was an error getting item by ${id} from table name.`);
-      return err;
-    }
-  },
+  //     return { ...car.Item, count: stock_car.Item?.count };
+  //   } catch (err) {
+  //     console.log(err);
+  //     console.log(`There was an error getting item by ${id} from table name.`);
+  //     return err;
+  //   }
+  // },
 
   async createProduct({ title, description, price, quantity }: CarItem) {
     const id = uuidv4();

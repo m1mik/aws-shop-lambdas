@@ -37,11 +37,22 @@ custom:
     #   dir: offline/migrations
 
 functions:
-  getProductsById:
-    handler: handlers.getProductsById
+  # getProductsById:
+  #   handler: handlers.getProductsById
+  #   events:
+  #     - http:
+  #         path: products/{id}
+  #         method: get
+  #         cors: true
+  #         request:
+  #           parameters:
+  #             paths:
+  #               id: true
+  testById:
+    handler: handlers.testById
     events:
       - http:
-          path: products/{id}
+          path: cars/{id}
           method: get
           cors: true
           request:
