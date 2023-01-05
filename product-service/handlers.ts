@@ -67,13 +67,34 @@ export const deleteProduct = async (event: APIGatewayEvent) => {
   };
 };
 
-export const getProductsById = async (event: APIGatewayEvent) => {
-  const params = event?.pathParameters;
+// export const getProductsById = async (event: APIGatewayEvent) => {
+//   const params = event?.pathParameters;
+//   console.log("Controller params: ", params);
 
-  const result = await DynamoClient.getProductsById(params?.id || "");
+//   const result = await DynamoClient.getProductsById(params?.id || "");
+//   console.log("RESULT: !!!", result);
+//   return {
+//     headers: {
+//       "Access-Control-Allow-Origin": "*",
+//       "Access-Control-Allow-Credentials": true,
+//       "Access-Control-Allow-Headers": "*",
+//     },
+//     statusCode: 200,
+//     body: result,
+//   };
+// };
+
+export const testById = async (event: APIGatewayEvent) => {
+  console.log("MY PARAMS: ", event.pathParameters);
+  const mockData = ["mimik", "zelos", "rofl"];
+
   return {
-    headers,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": true,
+      "Access-Control-Allow-Headers": "*",
+    },
     statusCode: 200,
-    body: result,
+    body: event.pathParameters,
   };
 };
