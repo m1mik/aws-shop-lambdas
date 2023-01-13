@@ -1,0 +1,44 @@
+service: import-service
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: dev
+  region: eu-west-1
+
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action: "s3:*"
+          Resource:
+            - "arn:aws:s3:::larsen5b"
+        - Effect: "Allow"
+          Action: "s3:*"
+          Resource:
+            - "arn:aws:s3:::larsen5b/*"
+
+functions:
+  importProductsFile:
+    handler: handlers.importProductsFile
+    environment:
+      S3_BUCKET: larsen5b
+    events:
+      - http:
+          path: import
+          method: post
+          cors: true
+
+  importFileParser:
+    handler: handlers.importFileParser
+    environment:
+      S3_BUCKET: larsen5b
+    events:
+      - s3:
+          bucket: larsen5b
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: uploaded/
+          existing: true
