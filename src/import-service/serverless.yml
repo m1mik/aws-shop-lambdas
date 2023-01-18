@@ -7,7 +7,11 @@ provider:
   runtime: nodejs16.x
   stage: dev
   region: eu-west-1
-
+  environment:
+    SQS_URL:
+      Ref: SQSQueue
+    SNS_ARN:
+      Ref: SNSTopic
   iam:
     role:
       statements:
@@ -19,6 +23,32 @@ provider:
           Action: "s3:*"
           Resource:
             - "arn:aws:s3:::larsen5b/*"
+        - Effect: "Allow"
+          Action: "sqs:*"
+          Resource:
+            - Fn::GetAtt: [SQSQueue, Arn]
+        - Effect: "Allow"
+          Action: "sns:*"
+          Resource:
+            Ref: SNSTopic
+
+resources:
+  Resources:
+    SQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: queue-task6
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: SNSTopic
+    SNSSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: gimmick.mimik@mail.com
+        Protocol: email
+        TopicArn:
+          Ref: SNSTopic
 
 functions:
   importProductsFile:
@@ -42,3 +72,13 @@ functions:
           rules:
             - prefix: uploaded/
           existing: true
+
+  catalogBatchProcess:
+    handler: handlers.catalogBatchProcess
+    events:
+      - sqs:
+          batchSize: 5
+          arn:
+            Fn::GetAtt:
+              - SQSQueue
+              - Arn

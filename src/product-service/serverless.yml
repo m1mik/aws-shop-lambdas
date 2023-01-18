@@ -48,17 +48,17 @@ functions:
   #           parameters:
   #             paths:
   #               id: true
-  testById:
-    handler: handlers.testById
-    events:
-      - http:
-          path: cars/{id}
-          method: get
-          cors: true
-          request:
-            parameters:
-              paths:
-                id: true
+  # testById:
+  #   handler: handlers.testById
+  #   events:
+  #     - http:
+  #         path: cars/{id}
+  #         method: get
+  #         cors: true
+  #         request:
+  #           parameters:
+  #             paths:
+  #               id: true
 
   getProductsList:
     handler: handlers.getProductsList
