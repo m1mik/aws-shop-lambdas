@@ -79,6 +79,7 @@ export const DynamoClient = {
         title,
         price,
         description,
+        quantity,
       },
     };
 
