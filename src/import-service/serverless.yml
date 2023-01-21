@@ -10,8 +10,8 @@ provider:
   environment:
     SQS_URL:
       Ref: SQSQueue
-    SNS_ARN:
-      Ref: SNSTopic
+    # SNS_ARN:
+    #   Ref: SNSTopic
   iam:
     role:
       statements:
@@ -27,10 +27,10 @@ provider:
           Action: "sqs:*"
           Resource:
             - Fn::GetAtt: [SQSQueue, Arn]
-        - Effect: "Allow"
-          Action: "sns:*"
-          Resource:
-            Ref: SNSTopic
+        # - Effect: "Allow"
+        #   Action: "sns:*"
+        #   Resource:
+        #     Ref: SNSTopic
 
 resources:
   Resources:
@@ -38,17 +38,17 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: queue-task6
-    SNSTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        TopicName: SNSTopic
-    SNSSubscription:
-      Type: AWS::SNS::Subscription
-      Properties:
-        Endpoint: gimmick.mimik@mail.com
-        Protocol: email
-        TopicArn:
-          Ref: SNSTopic
+    # SNSTopic:
+    #   Type: AWS::SNS::Topic
+    #   Properties:
+    #     TopicName: SNSTopic
+    # SNSSubscription:
+    #   Type: AWS::SNS::Subscription
+    #   Properties:
+    #     Endpoint: gimmick.mimik@mail.com
+    #     Protocol: email
+    #     TopicArn:
+    #       Ref: SNSTopic
 
 functions:
   importProductsFile:
@@ -73,12 +73,12 @@ functions:
             - prefix: uploaded/
           existing: true
 
-  catalogBatchProcess:
-    handler: handlers.catalogBatchProcess
-    events:
-      - sqs:
-          batchSize: 5
-          arn:
-            Fn::GetAtt:
-              - SQSQueue
-              - Arn
+  # catalogBatchProcess:
+  #   handler: handlers.catalogBatchProcess
+  #   events:
+  #     - sqs:
+  #         batchSize: 5
+  #         arn:
+  #           Fn::GetAtt:
+  #             - SQSQueue
+  #             - Arn
