@@ -1,9 +1,16 @@
-const AWS = require("aws-sdk");
+const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const csv = require("csv-parser");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const parser = require("lambda-multipart-parser");
-const { S3, PutObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  S3,
+  PutObjectCommand,
+  GetObjectCommand,
+  CopyObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 const axios = require("axios");
+const c = console.log;
 
 const headers = {
   "Access-Control-Allow-Headers": "Content-Type",
@@ -67,55 +74,92 @@ async function importProductsFile(event) {
 }
 
 async function importFileParser(event) {
-  const s3 = new AWS.S3({ region: "eu-west-1" });
-  const sqs = new AWS.SQS();
+  const s3 = new S3({ region: "eu-west-1" });
+  const sqs = new SQSClient({ region: "eu-west-1" });
 
   try {
+    console.log("AAA All records: ", event.Records);
     for (const file of event.Records) {
       const path = file.s3.object.key;
+      console.log(`!!! KEY ${path}; BUCKET ${S3_BUCKET}`);
       const params = {
         Bucket: S3_BUCKET,
         Key: path,
       };
-      s3.putObject();
-      const s3Stream = s3.getObject(params).createReadStream();
-      await new Promise((resolve, reject) => {
-        s3Stream
-          .pipe(csv())
-          .on("data", async (record) => {
-            await sqs
-              .sendMessage({
-                QueueUrl:
-                  "https://sqs.eu-west-1.amazonaws.com/032429682939/queue-task6",
-                MessageBody: JSON.stringify(record),
-              })
-              .promise();
-            console.log("on data read: ");
+      console.log("MY path to FILE: ", path);
+
+      const command = new GetObjectCommand(params);
+      const fileStream = await s3.send(command);
+      const dataForSQS = [];
+
+      await new Promise(async (resolve, reject) => {
+        fileStream.Body.pipe(csv())
+          .on("error", () => reject("Fail on CSV reading !!! @@@"))
+          .on("data", async (item) => {
+            console.log("ITEM from reading CSV data: ", item);
+            dataForSQS.push(item);
           })
-          .on("error", (err) => reject(err))
-          .on("end", async () => {
-            console.log("file succesfully parsed");
-            await s3
-              .copyObject({
-                Bucket: S3_BUCKET,
-                CopySource: `${S3_BUCKET}/${path}`,
-                Key: path.replace("uploaded", "parsed"),
-              })
-              .promise();
-
-            console.log("file succesfully moved to /parsed folder");
-
-            await s3
-              .deleteObject({
-                Bucket: S3_BUCKET,
-                Key: path,
-              })
-              .promise();
-            console.log("file succesfully removed from /uploaded folder");
-
+          .on("end", () => {
+            console.log("!!! CSV READING DONE: ");
             resolve();
           });
       });
+      console.log("!!! ITEMS: ", dataForSQS);
+      const resultOfPromiseAll = await Promise.all(
+        dataForSQS.map(
+          (item) =>
+            new Promise(async (res, rej) => {
+              const sqsParams = {
+                DelaySeconds: 1,
+                MessageBody: JSON.stringify(item),
+                QueueUrl:
+                  "https://sqs.eu-west-1.amazonaws.com/032429682939/queue-task6",
+              };
+
+              const sqsCommand = new SendMessageCommand(sqsParams);
+              let sqsResponse;
+
+              try {
+                sqsResponse = await sqs.send(sqsCommand);
+                console.log("!!! SQS send message successfully ");
+                res(sqsResponse);
+              } catch (err) {
+                console.log("!!! ERR on sqs send command: ", err);
+                rej(err);
+              }
+
+              let result;
+              try {
+                result = await axios.post(
+                  "https://hfmekszp10.execute-api.eu-west-1.amazonaws.com/dev/put-products",
+                  item,
+                  headers
+                );
+                console.log("CREATE ITEM RESULT !! : ", result);
+              } catch (err) {
+                console.log("ERROR ON ITEM CREATE: ", err);
+              }
+            })
+        )
+      );
+      console.log("!!! RESULT OF PROMISE ALL: ", resultOfPromiseAll);
+
+      const copyComParams = {
+        Bucket: S3_BUCKET,
+        CopySource: `${S3_BUCKET}/${path}`,
+        Key: path.replace("uploaded", "parsed"),
+      };
+      const copyCommand = new CopyObjectCommand(copyComParams);
+      await s3.send(copyCommand);
+      console.log("file succesfully moved to /parsed folder");
+
+      const deleteParams = {
+        Bucket: S3_BUCKET,
+        Key: path,
+      };
+      const deleteCommand = new DeleteObjectCommand(deleteParams);
+      await s3.send(deleteCommand);
+      console.log("file succesfully removed from /uploaded folder");
     }
 
     return send(202, "Accepted");
@@ -125,57 +169,19 @@ async function importFileParser(event) {
   }
 }
 
-async function catalogBatchProcess(event, _context, callback) {
-  const sns = new AWS.SNS({ region: "eu-west-1" });
-  let result;
-  for (const message of event.Records) {
-    const item = JSON.parse(message.body);
-    try {
-      console.log("--- ^^^ Incoming message from queue: ", message);
-      console.log("type of item: ::: !", message.body, typeof item);
+// unhandled infinite triggering lambda issue
+// async function catalogBatchProcess(event, _context, callback) {
+//   c("event.Records: ", event.Records);
+//   c("!!! length: ", event.Records.length);
+//   for (const message of event.Records) {
+//     console.log("--- ^^^ Incoming message from queue: ", message);
+//   }
 
-      result = await axios.post(
-        "https://qx3n710f35.execute-api.eu-west-1.amazonaws.com/dev/put-products",
-        message.body,
-        headers
-      );
-
-      sns.publish(
-        {
-          Subject: "New record added",
-          Message: `${item.title}, ${item.description}, price: ${item.price}, count: ${item.count}`,
-          // TopicArn: SNSTopic,
-          TopicArn: "arn:aws:sns:eu-west-1:032429682939:SNSTopic",
-          MessageAttributes: {
-            is_speakers: {
-              DataType: "String",
-              StringValue: "yes",
-            },
-          },
-        },
-        (err) => {
-          if (err) {
-            console.error("@@@@ Notification of creation new record failed");
-          }
-        }
-      );
-    } catch (err) {
-      result = `!!! @@ my error on SQS trigger: ${err}`;
-    }
-  }
-
-  // const response = {
-  //   statusCode: 200,
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  //   body: JSON.stringify({ message: "sqs work result is !!! 999 @@", result }),
-  // };
-  // callback(null, response);
-}
+//   callback(null, response);
+// }
 
 module.exports = {
   importProductsFile,
   importFileParser,
-  catalogBatchProcess,
+  // catalogBatchProcess,
 };
