@@ -1,0 +1,34 @@
+service: authorization-service
+frameworkVersion: "3"
+
+useDotenv: true
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: dev
+  region: eu-west-1
+  apiGateway:
+    minimumCompressionSize: 1024
+    shouldStartNameWithService: true
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    NODE_OPTIONS: "--enable-source-maps --stack-trace-limit=1000"
+    LOGIN: process.env.LOGIN
+    PASSWORD: process.env.PASSWORD
+
+functions:
+  basicAuthorizer:
+    handler: handler.basicAuthorizer
+resources:
+  Outputs:
+    basicAuthorizerARN:
+      Value:
+        "Fn::GetAtt":
+          - BasicAuthorizerLambdaFunction
+          - Arn

@@ -60,6 +60,12 @@ functions:
           path: import
           method: post
           cors: true
+          authorizer:
+            name: basicAuthorizer2
+            arn: "arn:aws:lambda:eu-west-1:032429682939:function:authorization-service-dev-basicAuthorizer"
+            resultTtlInSeconds: 0
+            identitySource: "method.request.header.Authorization"
+            type: "token"
 
   importFileParser:
     handler: handlers.importFileParser
